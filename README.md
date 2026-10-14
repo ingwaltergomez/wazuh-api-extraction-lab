@@ -54,7 +54,7 @@ La regla de detección incluida dispara por **volumen** (muchas peticiones en po
 
 ## Autor
 
-**Walter Gómez** — [LinkedIn](#) · [Medium](https://medium.com/@waltgomez)
+**Walter Gómez** — [LinkedIn](https://www.linkedin.com/in/ingwaltergomez) · [Medium](https://medium.com/@waltgomez)
 
 ## Licencia
 

@@ -1,0 +1,67 @@
+<!--
+  Reglas locales para el laboratorio.
+  Copiar/fusionar en: /var/ossec/etc/rules/local_rules.xml (en el MANAGER)
+
+  IDs en el rango 100000-109999, reservado para reglas locales según
+  la convención de Wazuh.
+-->
+
+<group name="api_abuse,">
+
+  <!--
+    Regla base: solo clasifica el evento, no genera alerta por sí sola
+    (level 3 = informativo). Sirve de "ancla" para la regla de volumen.
+  -->
+  <rule id="100100" level="3">
+    <decoded_as>api-access-log</decoded_as>
+    <description>Petición a la API de beneficiarios (LAB)</description>
+  </rule>
+
+  <!--
+    REGLA A — Volumen anómalo por IP de origen.
+    Dispara si la misma IP genera 20+ peticiones en una ventana de 10
+    segundos. El umbral es deliberadamente bajo para el laboratorio;
+    en un entorno real se calibra contra una línea base de tráfico
+    propio (ver scripts/baseline_traffic.py) antes de fijar el valor.
+  -->
+  <rule id="100101" level="10" frequency="20" timeframe="10">
+    <if_matched_sid>100100</if_matched_sid>
+    <same_source_ip />
+    <description>Posible extracción masiva vía API: alto volumen de peticiones desde un mismo origen ($(srcip))</description>
+    <mitre>
+      <id>T1119</id>
+    </mitre>
+  </rule>
+
+  <!--
+    REGLA B (bonus) — Ráfaga de errores 404 desde una misma IP.
+    Útil cuando el atacante no conoce el rango exacto de IDs válidos y
+    "tantea" valores fuera de rango. En este laboratorio, si el ataque
+    se limita al rango sembrado (1 al valor "count" de seed_data.py), esta
+    regla normalmente NO disparará — está aquí para que puedas
+    demostrarla ampliando el rango del atacante más allá del sembrado.
+  -->
+  <rule id="100102" level="7" frequency="15" timeframe="10">
+    <if_matched_sid>100100</if_matched_sid>
+    <same_source_ip />
+    <status>404</status>
+    <description>Posible enumeración/tanteo de IDs: ráfaga de respuestas 404 desde un mismo origen ($(srcip))</description>
+    <mitre>
+      <id>T1595.003</id>
+    </mitre>
+  </rule>
+
+</group>
+
+<!--
+  NOTA DE HONESTIDAD METODOLÓGICA PARA EL ARTÍCULO:
+  Wazuh, por reglas XML puras, detecta bien el VOLUMEN y la FRECUENCIA
+  de peticiones (regla 100101), pero no evalúa de forma nativa si los
+  IDs consultados son secuenciales (1, 2, 3, 4...) frente a aleatorios.
+  Para ese nivel de detección se necesitaría una integración externa
+  (un script que consuma la API de Wazuh o el índice de OpenSearch y
+  calcule la dispersión de IDs por ventana de tiempo). Es una limitación
+  real que vale la pena mencionar en el artículo en vez de omitirla:
+  la regla 100101 detecta el ataque por SU VOLUMEN, no por su patrón
+  de enumeración.
+-->

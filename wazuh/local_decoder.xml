@@ -1,0 +1,18 @@
+<!--
+  Decoder local para el log de acceso de la API del laboratorio.
+  Copiar/fusionar en: /var/ossec/etc/decoders/local_decoder.xml
+  (en el MANAGER, no en el agente — el agente solo reenvía el log crudo)
+
+  Formato de log esperado (ver vulnerable-api/app.py):
+  api_access: ip:192.168.50.20 method:GET path:/api/v1/beneficiarios/42 status:200
+-->
+
+<decoder name="api-access-log">
+  <prematch>^api_access:</prematch>
+</decoder>
+
+<decoder name="api-access-log-fields">
+  <parent>api-access-log</parent>
+  <regex>ip:(\S+) method:(\S+) path:(\S+) status:(\d+)</regex>
+  <order>srcip, http_method, http_path, http_status</order>
+</decoder>
